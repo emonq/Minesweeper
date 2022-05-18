@@ -39,6 +39,9 @@
     <Image Include="Assets\tile2.ico" />
     <Image Include="Assets\tile3.ico" />
   </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="Minesweeper.manifest" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>

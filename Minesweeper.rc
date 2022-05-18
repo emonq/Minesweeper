@@ -52,9 +52,9 @@ END
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-ICO_MINE_RED            ICON                    "Assets\\mine.ico"
-
 ICO_MINE_COMMON         ICON                    "Assets\\mine2.ico"
+
+ICO_MINE_RED            ICON                    "Assets\\mine.ico"
 
 ICO_MINE_BROKEN         ICON                    "Assets\\mine3.ico"
 
@@ -71,6 +71,129 @@ ICO_TILE_COMMON         ICON                    "Assets\\tile.ico"
 ICO_TILE_UNKNOWN        ICON                    "Assets\\tile2.ico"
 
 ICO_TILE_FLAG           ICON                    "Assets\\tile3.ico"
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Menu
+//
+
+IDR_MENU MENU
+BEGIN
+    POPUP "难度"
+    BEGIN
+        MENUITEM "入门",                          IDR_BEGINNER
+        MENUITEM "中级",                          IDR_INTERMEDIATE
+        MENUITEM "高级",                          IDR_ADVANCED
+        MENUITEM "大师",                          IDR_MASTER
+        MENUITEM "自定义",                         IDR_CUSTOM
+    END
+    POPUP "帮助"
+    BEGIN
+        MENUITEM "关于",                          IDR_ABOUT
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 1,0,0,1
+ PRODUCTVERSION 1,0,0,1
+ FILEFLAGSMASK 0x3fL
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x40004L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"
+        BEGIN
+            VALUE "CompanyName", "emonq"
+            VALUE "FileDescription", "扫雷"
+            VALUE "FileVersion", "1.0.0.1"
+            VALUE "InternalName", "Mineswee.exe"
+            VALUE "LegalCopyright", "Copyright (C) 2022"
+            VALUE "OriginalFilename", "Mineswee.exe"
+            VALUE "ProductName", "扫雷"
+            VALUE "ProductVersion", "1.0.0.1"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x804, 1200
+    END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_ACCELERATOR ACCELERATORS
+BEGIN
+    VK_ESCAPE,      IDA_ESC,                VIRTKEY, NOINVERT
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_CUSTOM, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 302
+        TOPMARGIN, 6
+        BOTTOMMARGIN, 169
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_CUSTOM DIALOGEX 0, 0, 309, 176
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "自定义"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "确定",IDOK,198,155,50,14
+    PUSHBUTTON      "取消",IDCANCEL,252,155,50,14
+    EDITTEXT        IDC_EDIT_ROW,105,40,47,17,ES_AUTOHSCROLL | ES_NUMBER
+    LTEXT           "行数",IDC_STATIC,65,40,17,8
+    LTEXT           "列数",IDC_STATIC,65,58,17,8
+    LTEXT           "雷数",IDC_STATIC,65,76,17,8
+    EDITTEXT        IDC_EDIT_COL,105,58,47,17,ES_AUTOHSCROLL | ES_NUMBER
+    EDITTEXT        IDC_EDIT_MINE,105,76,47,17,ES_AUTOHSCROLL | ES_NUMBER
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_CUSTOM AFX_DIALOG_LAYOUT
+BEGIN
+    0
+END
 
 #endif    // 中文(简体，中国) resources
 /////////////////////////////////////////////////////////////////////////////

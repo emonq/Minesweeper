@@ -61,4 +61,9 @@
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>
+  <ItemGroup>
+    <Manifest Include="Minesweeper.manifest">
+      <Filter>资源文件</Filter>
+    </Manifest>
+  </ItemGroup>
 </Project>
