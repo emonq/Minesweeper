@@ -72,6 +72,24 @@ ICO_TILE_UNKNOWN        ICON                    "Assets\\tile2.ico"
 
 ICO_TILE_FLAG           ICON                    "Assets\\tile3.ico"
 
+IDI_ICON1               ICON                    "Assets\\1.ico"
+
+IDI_ICON2               ICON                    "Assets\\2.ico"
+
+IDI_ICON3               ICON                    "Assets\\3.ico"
+
+IDI_ICON4               ICON                    "Assets\\4.ico"
+
+IDI_ICON5               ICON                    "Assets\\5.ico"
+
+IDI_ICON6               ICON                    "Assets\\6.ico"
+
+IDI_ICON7               ICON                    "Assets\\7.ico"
+
+IDI_ICON8               ICON                    "Assets\\8.ico"
+
+IDI_ICON9               ICON                    "assets\\icon9.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //

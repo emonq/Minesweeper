@@ -15,6 +15,15 @@
 #define IDR_MENU                        111
 #define IDR_ACCELERATOR                 112
 #define IDD_CUSTOM                      115
+#define IDI_ICON1                       117
+#define IDI_ICON2                       118
+#define IDI_ICON3                       119
+#define IDI_ICON4                       120
+#define IDI_ICON5                       121
+#define IDI_ICON6                       122
+#define IDI_ICON7                       123
+#define IDI_ICON8                       124
+#define IDI_ICON9                       125
 #define IDC_EDIT_ROW                    1013
 #define IDC_EDIT_COL                    1014
 #define IDC_EDIT_MINE                   1015
@@ -25,13 +34,12 @@
 #define IDR_CUSTOM                      40011
 #define IDR_ABOUT                       40012
 #define IDA_ESC                         40015
-#define IDC_STATIC                      -1
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        117
+#define _APS_NEXT_RESOURCE_VALUE        126
 #define _APS_NEXT_COMMAND_VALUE         40018
 #define _APS_NEXT_CONTROL_VALUE         1014
 #define _APS_NEXT_SYMED_VALUE           101
