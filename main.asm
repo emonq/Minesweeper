@@ -108,6 +108,7 @@ lpDefProcTile	dd				?
 .data
 ddMineSweepedCount		dd		0
 ddMineTotalCount		dd		10
+ddNoneMineCount			dd		90
 dwRow					dw		10
 dwColumn				dw		10
 dwTileID				dd		TILE_START
@@ -119,6 +120,10 @@ szClassName				db		"MinesweeperClass", 0
 szCaptionMain			db		"扫雷", 0
 szButtonClass			db		"button",0
 szTextAboutCaption		db		"关于扫雷",0
+szTextFailCaption		db		"失败",0
+szTextSucessCaption		db		"胜利",0
+szTextFail				db		"您触雷了，游戏失败",0
+szTextSucess			db		"真厉害，您胜利了！",0
 szTextAbout				db		"这是一个经典Windows扫雷游戏的汇编版本复刻。",0
 szDigitFmt				db		"%d",0
 szError					db		"错误",0
@@ -139,26 +144,126 @@ dwColMaster				dw		30
 ddMinesMaster			dd		500
 
 .code
+
+;按下后数字显示
+_Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
+	local	@myOffset	;当前点击坐标的偏移量
+	local	@newOffset	;要拓展的坐标的偏移量
+	local	@newtileID
+	local	@hTile
+	local	i
+	local	j
+	local	@stPoint:POINT
+	invoke	GetDlgItem, hWnd, tileID
+	mov		@hTile, eax
+	;invoke  EnableWindow,@hTile,FALSE
+	;invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIcon1
+	mov	ebx,tileID
+	sub	ebx,TILE_START
+	dec ebx
+	add	ebx,ddPointer
+	mov @myOffset,ebx
+	;产生爆炸
+	.if byte ptr [ebx] == 0ffh
+		invoke SendMessage,@hTile,BM_SETIMAGE,IMAGE_ICON, hIconMineBroken
+		invoke	MessageBox, hWnd, offset szTextFail, offset szTextFailCaption, MB_OK
+	.elseif byte ptr [ebx] < 9
+		.if byte ptr [ebx] == 0
+			invoke SendMessage,@hTile,BM_SETIMAGE,IMAGE_ICON, hIconTileCommon
+			mov	al,9
+			mov byte ptr [ebx],al
+			inc	ddMineSweepedCount 
+			mov	eax,ddNoneMineCount
+			.if ddMineSweepedCount == eax
+				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OK
+			.endif
+			mov	i,0
+			.while i < 3
+				mov j,0
+				.while j < 3
+					xor ecx,ecx
+					xor	edx,edx
+					mov cx,dwRow
+					mov	dx,dwColumn
+					dec	ecx
+					dec	edx
+					.if (stPoint.y == 0 && i == 0) || (stPoint.x == 0 && j == 0)
+						inc	j
+						.continue
+					.elseif	(ecx == stPoint.y && i == 2) || (edx == stPoint.x && j == 2)
+						inc j
+						.continue
+					.else
+						mov	eax,i
+						mul dwColumn
+						add	eax,tileID
+						sub	ax,dwColumn
+						add	eax,j
+						dec	eax
+						mov	@newtileID,eax
+						add	eax,@myOffset
+						sub	eax,tileID
+						mov	@newOffset,eax
+						mov	eax,j
+						add	eax,stPoint.x
+						dec	eax
+						mov	@stPoint.x,eax
+						mov	eax,i
+						add	eax,stPoint.y
+						dec	eax
+						mov @stPoint.y,eax
+						mov	eax,@newtileID
+						sub	eax,TILE_START
+						add	eax,ddPointer
+						dec	eax
+						.if	byte ptr [eax] != 9
+							invoke _Show,hWnd,@stPoint,@newtileID
+						.endif
+					.endif
+					inc j
+				.endw
+				inc	i
+			.endw
+
+		.else
+			mov al,byte ptr [ebx]
+			movzx eax,al
+			mov	cl,4
+			mul cl
+			add eax,offset hIcon1
+			sub eax,4
+			invoke SendMessage,@hTile,BM_SETIMAGE,IMAGE_ICON, [eax]
+			mov al,9
+			mov byte ptr [ebx],al
+			inc	ddMineSweepedCount
+			mov	eax,ddNoneMineCount
+			.if ddMineSweepedCount == eax
+				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OK
+			.endif
+		.endif
+	.endif
+	ret
+_Show	endp
+
 ;初始化雷
-_Init	proc	uses edi ebx eax esi edi edx ecx, stPoint:POINT
+_Init	proc	uses edi ebx eax esi edi edx ecx,stPoint:POINT
 		local	@size:word
-		local	temp
+		local	@pAddr
+		local	@num
+		local	@myOffset
 		local	i
 		local	j
-		local	pAddr
-		local	num
-		local	myOffset
 		mov		ax,dwRow
 		mov		bx,dwColumn
 		mul		bx
 		mov		@size,ax
 		invoke	GlobalAlloc,GPTR,@size
 		mov		ddPointer,eax
-		mov		eax,stPoint.x
+		mov		eax,stPoint.y
 		mul		dwColumn
-		add		eax,stPoint.y
+		add		eax,stPoint.x
 		add		eax,ddPointer
-		mov		pAddr,eax
+		mov		@pAddr,eax
 		mov		byte ptr [eax],0ffh
 		mov		i,0
 		xor		ebx,ebx
@@ -181,7 +286,7 @@ _Init	proc	uses edi ebx eax esi edi edx ecx, stPoint:POINT
 				inc	i
 				mov	ebx,i
 		.endw
-		mov		eax,pAddr
+		mov		eax,@pAddr
 		mov		byte ptr [eax],0
 		xor		eax,eax
 		xor		ebx,ebx
@@ -197,7 +302,7 @@ _Init	proc	uses edi ebx eax esi edi edx ecx, stPoint:POINT
 				.continue
 			.endif
 			mov	i,0
-			mov	num,0
+			mov	@num,0
 			.while	i < 3
 				mov	j,0
 				.while	j < 3
@@ -206,10 +311,10 @@ _Init	proc	uses edi ebx eax esi edi edx ecx, stPoint:POINT
 					add	eax,j
 					dec	eax
 					sub	ax,dwColumn
-					mov	myOffset,eax
+					mov	@myOffset,eax
 					mov	eax,i
 					mul dwColumn
-					add	myOffset,eax
+					add	@myOffset,eax
 					push	eax
 					push	edx
 					xor		dx,dx
@@ -231,15 +336,15 @@ _Init	proc	uses edi ebx eax esi edi edx ecx, stPoint:POINT
 						.endif
 					.endif
 
-					mov	ecx,myOffset
+					mov	ecx,@myOffset
 					.if byte ptr [ecx] == 0ffh
-						inc	num
+						inc	@num
 					.endif
 				inc	j
 				.endw
 				inc	i
 			.endw
-			mov	eax,num
+			mov	eax,@num
 			mov	ecx,ddPointer
 			add	ecx,ebx
 			mov	byte ptr [ecx],al
@@ -256,10 +361,30 @@ _ClickTile		proc	hWnd, stPoint:POINT, typeID, tileID
 				mov		@hTile, eax
 				;右键单击
 				.if		typeID == BN_RCLICKED
-						invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconFlag
+						.if	bStarted == 1
+							mov	eax,stPoint.y
+							mul	dwColumn
+							add	eax,ddPointer
+							add	eax,stPoint.x
+							.if	byte ptr [eax] != 9
+								invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconFlag
+							.endif
+						.elseif
+							invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconFlag
+						.endif
 				;中键单击
 				.elseif	typeID == BN_MCLICKED
-						invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconUnknown
+						.if	bStarted == 1
+							mov	eax,stPoint.y
+							mul	dwColumn
+							add	eax,ddPointer
+							add	eax,stPoint.x
+							.if	byte ptr [eax] != 9
+								invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconFlag
+							.endif
+						.elseif
+							invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconUnknown
+						.endif
 				;左键单击，清空标记
 				.else
 						invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
@@ -271,8 +396,8 @@ _ClickTile		proc	hWnd, stPoint:POINT, typeID, tileID
 							.if	bStarted == 0
 								invoke _Init, stPoint
 								mov		byte ptr bStarted,1
-							;.else	
 							.endif
+							invoke _Show, hWnd,stPoint,tileID
 						.endif
 				.endif
 				ret
@@ -324,6 +449,7 @@ _CreateGame		proc	uses eax ebx ecx edx esi edi, hWnd, level
 				local	@dwX:WORD, @dwY:WORD
 				mov		byte ptr bStarted,0
 				mov		ddPointer,0
+				mov		ddMineSweepedCount,0
 				invoke	GlobalFree,ddPointer
 				.if		level == IDR_BEGINNER
 						push	dwRowBeginner
@@ -477,6 +603,7 @@ _CustomDlgProc	proc	uses ebx ecx edx esi edi, hWnd, wMsg, wParam, lParam
 								mov		ax, dwColumn
 								mul		dwRow
 								movzx	eax, ax
+								dec		eax
 								.if		edi > eax
 										invoke	wsprintf, addr @buf, offset szMineExceedFmt, eax
 										invoke	MessageBox, hWnd, addr @buf, offset szError, MB_ICONERROR
