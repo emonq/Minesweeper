@@ -253,10 +253,13 @@ _Init	proc	uses edi ebx eax esi edi edx ecx,stPoint:POINT
 		local	@myOffset
 		local	i
 		local	j
+		xor		eax,eax
 		mov		ax,dwRow
 		mov		bx,dwColumn
 		mul		bx
 		mov		@size,ax
+		sub		eax,ddMineTotalCount
+		mov		ddNoneMineCount,eax
 		invoke	GlobalAlloc,GPTR,@size
 		mov		ddPointer,eax
 		mov		eax,stPoint.y
