@@ -88,7 +88,25 @@ IDI_ICON7               ICON                    "Assets\\7.ico"
 
 IDI_ICON8               ICON                    "Assets\\8.ico"
 
-IDI_ICON9               ICON                    "assets\\icon9.ico"
+IDI_NUMBER0             ICON                    "Assets\\Number0.ico"
+
+IDI_NUMBER1             ICON                    "Assets\\Number1.ico"
+
+IDI_NUMBER2             ICON                    "Assets\\Number2.ico"
+
+IDI_NUMBER3             ICON                    "Assets\\Number3.ico"
+
+IDI_NUMBER4             ICON                    "Assets\\Number4.ico"
+
+IDI_NUMBER5             ICON                    "Assets\\Number5.ico"
+
+IDI_NUMBER6             ICON                    "Assets\\Number6.ico"
+
+IDI_NUMBER7             ICON                    "Assets\\Number7.ico"
+
+IDI_NUMBER8             ICON                    "Assets\\Number8.ico"
+
+IDI_NUMBER9             ICON                    "Assets\\Number9.ico"
 
 
 /////////////////////////////////////////////////////////////////////////////

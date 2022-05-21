@@ -23,7 +23,17 @@
 #define IDI_ICON6                       122
 #define IDI_ICON7                       123
 #define IDI_ICON8                       124
-#define IDI_ICON9                       125
+#define IDI_NUMBER0                     140
+#define IDI_NUMBER1                     141
+#define IDI_NUMBER2                     142
+#define IDI_NUMBER3                     143
+#define IDI_NUMBER4                     144
+#define IDI_NUMBER5                     145
+#define IDI_NUMBER6                     146
+#define IDI_NUMBER7                     147
+#define IDI_ICON17                      148
+#define IDI_NUMBER8                     148
+#define IDI_NUMBER9                     149
 #define IDC_EDIT_ROW                    1013
 #define IDC_EDIT_COL                    1014
 #define IDC_EDIT_MINE                   1015
@@ -39,7 +49,7 @@
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
-#define _APS_NEXT_RESOURCE_VALUE        126
+#define _APS_NEXT_RESOURCE_VALUE        150
 #define _APS_NEXT_COMMAND_VALUE         40018
 #define _APS_NEXT_CONTROL_VALUE         1014
 #define _APS_NEXT_SYMED_VALUE           101

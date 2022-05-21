@@ -21,6 +21,7 @@ include		Shlwapi.inc
 includelib	Shlwapi.lib
 
 rand	PROTO C
+
 ;图标定义
 ICO_MINE_COMMON			equ		101
 ICO_MINE_RED			equ		102
@@ -30,7 +31,6 @@ ICO_SMILEY				equ		105
 ICO_SMILEY_OH			equ		106
 ICO_SMILEY_SAD			equ		107
 ICO_TILE_COMMON			equ		108
-IDI_ICON9				equ		109
 ICO_TILE_UNKNOWN		equ		109
 ICO_TILE_FLAG			equ		110
 IDI_ICON1				equ		117
@@ -41,6 +41,16 @@ IDI_ICON5				equ		121
 IDI_ICON6				equ		122
 IDI_ICON7				equ		123
 IDI_ICON8				equ		124
+IDI_NUMBER0             equ     140
+IDI_NUMBER1             equ     141
+IDI_NUMBER2             equ     142
+IDI_NUMBER3             equ     143
+IDI_NUMBER4             equ     144
+IDI_NUMBER5             equ     145
+IDI_NUMBER6             equ     146
+IDI_NUMBER7             equ     147
+IDI_NUMBER8             equ     148
+IDI_NUMBER9             equ     149
 
 ;菜单定义
 IDR_MENU				equ		111
@@ -83,6 +93,17 @@ TILE_START				equ		60000
 MAX_ROW					equ		30
 MAX_COL					equ		30
 
+;剩余雷数显示框
+ID_MINE_SHOW1				equ		70001
+ID_MINE_SHOW2				equ		70002
+ID_MINE_SHOW3				equ		70003
+;时间显示框
+ID_TIMER_SHOW1				equ		70004
+ID_TIMER_SHOW2				equ		70005
+ID_TIMER_SHOW3				equ		70006
+
+ID_TIMER				equ		70010
+
 .data?
 hInstance		dd				?
 hWinMain		dd				?
@@ -101,11 +122,27 @@ hIcon5			dd				?
 hIcon6			dd				?
 hIcon7			dd				?
 hIcon8			dd				?
+
+hNumber0		dd				?
+hNumber1		dd				?
+hNumber2		dd				?
+hNumber3		dd				?
+hNumber4		dd				?
+hNumber5		dd				?
+hNumber6		dd				?
+hNumber7		dd				?
+hNumber8		dd				?
+hNumber9		dd				?
+
+hMineShow		dd				0, 0, 0
+hTimerShow		dd				0, 0, 0
+
 hStartButton	dd				?
 hMenu			dd				?
 lpDefProcTile	dd				?
 
 .data
+ddFlagCount				dd		0
 ddMineSweepedCount		dd		0
 ddMineTotalCount		dd		10
 ddNoneMineCount			dd		90
@@ -115,10 +152,13 @@ dwTileID				dd		TILE_START
 bStarted				db		0
 ddPointer				dd		0	
 
+ddTimer					dd		0
+
 .const
 szClassName				db		"MinesweeperClass", 0
 szCaptionMain			db		"扫雷", 0
-szButtonClass			db		"button",0
+szButtonClass			db		"button", 0
+szStaticClass			db		"static", 0
 szTextAboutCaption		db		"关于扫雷",0
 szTextFailCaption		db		"失败",0
 szTextSucessCaption		db		"胜利",0
@@ -145,6 +185,65 @@ ddMinesMaster			dd		500
 
 .code
 
+_CreateGame	proto stdcall hWnd:dword, level:dword
+
+_ShowNumber proc uses ecx ebx edx,handle:dword, number:dword
+	xor eax, eax
+	mov	eax, number
+	mov edx, 4
+	mul edx 
+	mov	ecx, offset hNumber0
+	add ecx, eax
+	invoke SendMessage, handle, BM_SETIMAGE, IMAGE_ICON, [ecx]
+	xor eax, eax
+	ret
+_ShowNumber endp
+
+_ShowTime	proc uses edx eax ebx ecx
+	local @: dword
+	xor edx, edx
+	mov	eax, ddTimer
+	mov	ebx, 10
+	div	ebx
+	mov @, edx
+	push	eax
+	invoke _ShowNumber, hTimerShow[8], @
+	xor	edx, edx
+	pop eax
+	mov	ebx, 10
+	div ebx
+	mov @, eax
+	invoke _ShowNumber, hTimerShow[0], @
+	mov	@, edx
+	invoke _ShowNumber, hTimerShow[4], @
+	xor eax, eax
+	ret
+_ShowTime	endp
+
+_ShowMineCount	proc uses edx eax ebx ecx
+	local @ : dword
+	xor edx, edx
+	mov	eax, ddMineTotalCount
+	sub eax, ddFlagCount
+	mov	ebx, 10
+	div ebx
+	push eax 
+	mov	@, edx
+	invoke _ShowNumber, hMineShow[8], @
+	xor edx, edx
+	pop eax
+	mov	ebx, 10
+	div	ebx
+	mov	@, eax
+	mov	ecx, hMineShow[0]
+	invoke _ShowNumber,ecx , @
+	mov @, edx
+	invoke _ShowNumber, hMineShow[4], @
+
+	xor	eax, eax
+	ret
+_ShowMineCount	endp	
+
 ;按下后数字显示
 _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 	local	@myOffset	;当前点击坐标的偏移量
@@ -167,6 +266,7 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 	.if byte ptr [ebx] == 0ffh
 		invoke SendMessage,@hTile,BM_SETIMAGE,IMAGE_ICON, hIconMineBroken
 		invoke	MessageBox, hWnd, offset szTextFail, offset szTextFailCaption, MB_OK
+		invoke	_CreateGame, hWinMain, IDR_CUSTOM
 	.elseif byte ptr [ebx] < 9
 		.if byte ptr [ebx] == 0
 			invoke SendMessage,@hTile,BM_SETIMAGE,IMAGE_ICON, hIconTileCommon
@@ -175,6 +275,7 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 			inc	ddMineSweepedCount 
 			mov	eax,ddNoneMineCount
 			.if ddMineSweepedCount == eax
+				invoke	KillTimer, hWinMain ,ID_TIMER
 				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OK
 			.endif
 			mov	i,0
@@ -238,6 +339,7 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 			inc	ddMineSweepedCount
 			mov	eax,ddNoneMineCount
 			.if ddMineSweepedCount == eax
+				invoke	KillTimer, hWinMain ,ID_TIMER
 				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OK
 			.endif
 		.endif
@@ -370,10 +472,19 @@ _ClickTile		proc	hWnd, stPoint:POINT, typeID, tileID
 							add	eax,ddPointer
 							add	eax,stPoint.x
 							.if	byte ptr [eax] != 9
-								invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconFlag
+								push edx
+								mov	edx, ddMineTotalCount
+								.if ddFlagCount < edx
+									inc	ddFlagCount
+									invoke _ShowMineCount
+									invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconFlag
+								.endif
+								pop edx
 							.endif
-						.elseif
+						.else
 							invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconFlag
+							inc	ddFlagCount
+							invoke _ShowMineCount
 						.endif
 				;中键单击
 				.elseif	typeID == BN_MCLICKED
@@ -393,12 +504,15 @@ _ClickTile		proc	hWnd, stPoint:POINT, typeID, tileID
 						invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
 						.if		eax == hIconFlag
 								invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconUnknown
+								dec	ddFlagCount
+								invoke _ShowMineCount
 						.elseif	eax == hIconUnknown
 								invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, 0
 						.else	
 							.if	bStarted == 0
 								invoke _Init, stPoint
 								mov		byte ptr bStarted,1
+								invoke	SetTimer, hWinMain, ID_TIMER, 1000, NULL
 							.endif
 							invoke _Show, hWnd,stPoint,tileID
 						.endif
@@ -453,6 +567,9 @@ _CreateGame		proc	uses eax ebx ecx edx esi edi, hWnd, level
 				mov		byte ptr bStarted,0
 				mov		ddPointer,0
 				mov		ddMineSweepedCount,0
+				mov		ddFlagCount,0
+				mov		ddTimer, 0
+				invoke	KillTimer, hWinMain ,ID_TIMER
 				invoke	GlobalFree,ddPointer
 				.if		level == IDR_BEGINNER
 						push	dwRowBeginner
@@ -497,6 +614,18 @@ _CreateGame		proc	uses eax ebx ecx edx esi edi, hWnd, level
 				mov		@dwCy, ax
 				invoke	GetDlgItem, hWnd, IDB_START
 				invoke	DestroyWindow, eax
+				invoke	GetDlgItem, hWnd, ID_TIMER_SHOW1
+				invoke	DestroyWindow, eax
+				invoke	GetDlgItem, hWnd, ID_TIMER_SHOW2
+				invoke	DestroyWindow, eax
+				invoke	GetDlgItem, hWnd, ID_TIMER_SHOW3
+				invoke	DestroyWindow, eax
+				invoke	GetDlgItem, hWnd, ID_MINE_SHOW1
+				invoke	DestroyWindow, eax
+				invoke	GetDlgItem, hWnd, ID_MINE_SHOW2
+				invoke	DestroyWindow, eax
+				invoke	GetDlgItem, hWnd, ID_MINE_SHOW3
+				invoke	DestroyWindow, eax
 				.while	dwTileID > TILE_START
 						invoke	GetDlgItem, hWnd, dwTileID
 						invoke	DestroyWindow, eax
@@ -518,6 +647,67 @@ _CreateGame		proc	uses eax ebx ecx edx esi edi, hWnd, level
 				mov		hStartButton, eax
 				invoke	LoadIcon, hInstance, ICO_SMILEY
 				invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, eax
+
+				; 创建剩余雷数窗口
+				xor	ecx,	ecx
+				.while	ecx < 3
+					mov		ebx, BORDER_SIZE
+					xor		eax, eax
+					mov		eax, START_SIZE/2
+					mul		ecx
+					add		ebx, eax
+					mov		eax, ID_MINE_SHOW1
+					add		eax, ecx
+					push	ecx
+					invoke	CreateWindowEx, NULL,
+											offset szButtonClass,
+											NULL,
+											WS_CHILD or WS_VISIBLE  or BS_ICON or BS_NOTIFY,
+											ebx , BORDER_SIZE + START_SIZE/4, START_SIZE/2-4, START_SIZE/2,
+											hWnd, eax, hInstance, NULL
+					pop		ecx
+					mov		hMineShow[ecx*4],	eax
+					mov		ebx,	eax
+					;push	ecx
+					;invoke	SendMessage, ebx, BM_SETIMAGE, IMAGE_ICON, hNumber0 
+					;pop     ecx
+					;invoke _ShowNumber, ebx, 5
+					inc	ecx
+				.endw
+				invoke	_ShowMineCount
+
+				; 创建计时器窗口
+				mov		ebx, @stRect.right
+				sub		ebx, @stRect.left
+				sub		ebx, BORDER_SIZE
+				xor     eax, eax
+				mov		eax, START_SIZE/2
+				mov		ecx, 3
+				mul     ecx
+				sub		ebx, eax
+				xor		ecx, ecx
+				.while ecx < 3
+					push    ebx
+					xor		eax, eax
+					mov		eax, START_SIZE/2
+					mul		ecx
+					add		ebx, eax
+					mov		eax, ID_TIMER_SHOW1
+					add		eax, ecx
+					push	ecx
+					invoke	CreateWindowEx, NULL,
+											offset szButtonClass,
+											NULL,
+											WS_CHILD or WS_VISIBLE  or BS_ICON or BS_NOTIFY,
+											ebx , BORDER_SIZE + START_SIZE/4, START_SIZE/2-4, START_SIZE/2,
+											hWnd, eax, hInstance, NULL
+					pop		ecx
+					mov		hTimerShow[ecx*4],	eax
+					inc		ecx
+					pop		ebx
+				.endw
+				invoke _ShowTime
+
 				xor		bx, bx
 				;创建格子
 				.while	bx < dwRow
@@ -548,6 +738,7 @@ _CreateGame		proc	uses eax ebx ecx edx esi edi, hWnd, level
 						.endw
 						inc		bx
 				.endw
+
 				ret
 _CreateGame		endp
 
@@ -665,6 +856,7 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 						mov		hIcon7, eax
 						invoke	LoadIcon, hInstance, IDI_ICON8
 						mov		hIcon8, eax
+
 						invoke	LoadIcon, hInstance, ICO_TILE_COMMON
 						mov		hIconTileCommon, eax
 						invoke	LoadIcon, hInstance, ICO_MINE_COMMON
@@ -673,8 +865,31 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 						mov		hIconMineBroken, eax
 						invoke	LoadIcon, hInstance, ICO_MINE_RED
 						mov		hIconMineRed, eax
+
+						invoke	LoadIcon, hInstance, IDI_NUMBER0
+						mov		hNumber0,	eax
+						invoke	LoadIcon, hInstance, IDI_NUMBER1
+						mov		hNumber1,	eax
+						invoke	LoadIcon, hInstance, IDI_NUMBER2
+						mov		hNumber2,	eax
+						invoke	LoadIcon, hInstance, IDI_NUMBER3
+						mov		hNumber3,	eax
+						invoke	LoadIcon, hInstance, IDI_NUMBER4
+						mov		hNumber4,	eax
+						invoke	LoadIcon, hInstance, IDI_NUMBER5
+						mov		hNumber5,	eax
+						invoke	LoadIcon, hInstance, IDI_NUMBER6
+						mov		hNumber6,	eax
+						invoke	LoadIcon, hInstance, IDI_NUMBER7
+						mov		hNumber7,	eax
+						invoke	LoadIcon, hInstance, IDI_NUMBER8
+						mov		hNumber8,	eax
+						invoke	LoadIcon, hInstance, IDI_NUMBER9
+						mov		hNumber9,	eax
+
 						invoke	CheckMenuRadioItem, hMenu, IDR_BEGINNER, IDR_CUSTOM, IDR_BEGINNER, MF_BYCOMMAND
 						invoke	_CreateGame, hWnd, IDR_BEGINNER
+
 				.elseif	eax == WM_COMMAND
 						mov		eax, wParam
 						movzx	eax, ax
@@ -732,6 +947,9 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 				.elseif eax == WM_CLOSE
 						invoke	DestroyWindow, hWinMain
 						invoke	PostQuitMessage, NULL
+				.elseif eax == WM_TIMER
+						inc	ddTimer
+						invoke _ShowTime	
 				.else
 						invoke	DefWindowProc, hWnd, uMsg, wParam, lParam
 						ret
