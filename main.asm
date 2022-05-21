@@ -189,6 +189,7 @@ ddMinesMaster			dd		500
 _CreateGame	proto stdcall hWnd:dword, level:dword
 
 _ShowNumber proc uses ecx ebx edx,handle:dword, number:dword
+
 	xor eax, eax
 	mov	eax, number
 	mov edx, 4
@@ -515,9 +516,13 @@ _ClickTile		proc	hWnd, stPoint:POINT, typeID, tileID
 								pop edx
 							.endif
 						.else
-							invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconFlag
-							inc	ddFlagCount
-							invoke _ShowMineCount
+							push edx
+							mov	edx, ddMineTotalCount
+							.if ddFlagCount < edx
+								inc	ddFlagCount
+								invoke _ShowMineCount
+								invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconFlag
+							.endif
 						.endif
 				;ÖÐ¼üµ¥»÷
 				.elseif	typeID == BN_MCLICKED
@@ -994,7 +999,9 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 						invoke	PostQuitMessage, NULL
 				.elseif eax == WM_TIMER
 						inc	ddTimer
-						invoke _ShowTime	
+						.if ddTimer < 1000
+							invoke _ShowTime	
+						.endif
 				.else
 						invoke	DefWindowProc, hWnd, uMsg, wParam, lParam
 						ret
