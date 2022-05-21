@@ -162,8 +162,8 @@ szStaticClass			db		"static", 0
 szTextAboutCaption		db		"关于扫雷",0
 szTextFailCaption		db		"失败",0
 szTextSucessCaption		db		"胜利",0
-szTextFail				db		"您触雷了，游戏失败",0
-szTextSucess			db		"真厉害，您胜利了！",0
+szTextFail				db		"您触雷了，游戏失败",0ah,"要开始新游戏吗？",0
+szTextSucess			db		"真厉害，您胜利了！",0ah,"要开始新游戏吗？",0
 szTextAbout				db		"这是一个经典Windows扫雷游戏的汇编版本复刻。",0
 szDigitFmt				db		"%d",0
 szError					db		"错误",0
@@ -244,6 +244,16 @@ _ShowMineCount	proc uses edx eax ebx ecx
 	ret
 _ShowMineCount	endp	
 
+_DisableTiles	proc uses eax esi
+				mov		esi, dwTileID
+				.while	esi > TILE_START
+						invoke	GetDlgItem, hWinMain, esi
+						invoke	EnableWindow, eax, FALSE
+						dec		esi
+				.endw
+				ret
+_DisableTiles	endp
+
 ;按下后数字显示
 _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 	local	@myOffset	;当前点击坐标的偏移量
@@ -270,8 +280,12 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 	.if byte ptr [ebx] == 0ffh
 		invoke SendMessage,@hTile,BM_SETIMAGE,IMAGE_ICON, hIconMineBroken
 		invoke	KillTimer, hWinMain, ID_TIMER
-		invoke	MessageBox, hWnd, offset szTextFail, offset szTextFailCaption, MB_OK
-		invoke	_CreateGame, hWinMain, IDR_CUSTOM
+		invoke	MessageBox, hWnd, offset szTextFail, offset szTextFailCaption, MB_OKCANCEL
+		.if		eax == IDOK
+				invoke	_CreateGame, hWinMain, IDR_CUSTOM
+		.else
+				invoke	_DisableTiles
+		.endif
 	.elseif byte ptr [ebx] < 9
 		.if byte ptr [ebx] == 0	
 			invoke SendMessage,@hTile,BM_SETIMAGE,IMAGE_ICON, hIconTileCommon
@@ -281,7 +295,13 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 			mov	eax,ddNoneMineCount
 			.if ddMineSweepedCount == eax
 				invoke	KillTimer, hWinMain ,ID_TIMER
-				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OK
+				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OKCANCEL
+				.if		eax == IDOK
+						invoke	_CreateGame, hWinMain, IDR_CUSTOM
+				.else
+						invoke	_DisableTiles
+				.endif
+				
 			.endif
 			mov	i,0
 			.while i < 3
@@ -345,7 +365,12 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 			mov	eax,ddNoneMineCount
 			.if ddMineSweepedCount == eax
 				invoke	KillTimer, hWinMain ,ID_TIMER
-				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OK
+				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OKCANCEL
+				.if		eax == IDOK
+						invoke	_CreateGame, hWinMain, IDR_CUSTOM
+				.else
+						invoke	_DisableTiles
+				.endif
 			.endif
 		.endif
 	.endif
