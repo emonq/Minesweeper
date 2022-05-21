@@ -257,6 +257,10 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 	mov		@hTile, eax
 	;invoke  EnableWindow,@hTile,FALSE
 	;invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIcon1
+	invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
+	.if eax == hIconFlag
+		ret
+	.endif
 	mov	ebx,tileID
 	sub	ebx,TILE_START
 	dec ebx
@@ -265,10 +269,11 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 	;²úÉú±¬Õ¨
 	.if byte ptr [ebx] == 0ffh
 		invoke SendMessage,@hTile,BM_SETIMAGE,IMAGE_ICON, hIconMineBroken
+		invoke	KillTimer, hWinMain, ID_TIMER
 		invoke	MessageBox, hWnd, offset szTextFail, offset szTextFailCaption, MB_OK
 		invoke	_CreateGame, hWinMain, IDR_CUSTOM
 	.elseif byte ptr [ebx] < 9
-		.if byte ptr [ebx] == 0
+		.if byte ptr [ebx] == 0	
 			invoke SendMessage,@hTile,BM_SETIMAGE,IMAGE_ICON, hIconTileCommon
 			mov	al,9
 			mov byte ptr [ebx],al
@@ -317,7 +322,8 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 						sub	eax,TILE_START
 						add	eax,ddPointer
 						dec	eax
-						.if	byte ptr [eax] != 9
+						mov	edi,eax					
+						.if	byte ptr [edi] != 9 
 							invoke _Show,hWnd,@stPoint,@newtileID
 						.endif
 					.endif
@@ -325,7 +331,6 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 				.endw
 				inc	i
 			.endw
-
 		.else
 			mov al,byte ptr [ebx]
 			movzx eax,al
