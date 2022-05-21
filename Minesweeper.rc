@@ -123,6 +123,8 @@ BEGIN
         MENUITEM "高级",                          IDR_ADVANCED
         MENUITEM "大师",                          IDR_MASTER
         MENUITEM "自定义",                         IDR_CUSTOM
+        MENUITEM SEPARATOR
+        MENUITEM "无赖模式",                        IDR_CHEAT
     END
     POPUP "帮助"
     BEGIN

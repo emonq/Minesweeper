@@ -60,6 +60,7 @@ IDR_ADVANCED			equ		40009
 IDR_MASTER				equ		40010
 IDR_CUSTOM				equ		40011
 IDR_ABOUT				equ		40012
+IDR_CHEAT				equ		40019
 
 ;加速键定义
 IDR_ACCELERATOR			equ		112
@@ -122,7 +123,9 @@ hIcon5			dd				?
 hIcon6			dd				?
 hIcon7			dd				?
 hIcon8			dd				?
-
+hIconSad		dd				?
+hIconSmile		dd				?
+hIconOh			dd				?
 hNumber0		dd				?
 hNumber1		dd				?
 hNumber2		dd				?
@@ -133,10 +136,6 @@ hNumber6		dd				?
 hNumber7		dd				?
 hNumber8		dd				?
 hNumber9		dd				?
-
-hMineShow		dd				0, 0, 0
-hTimerShow		dd				0, 0, 0
-
 hStartButton	dd				?
 hMenu			dd				?
 lpDefProcTile	dd				?
@@ -151,8 +150,10 @@ dwColumn				dw		10
 dwTileID				dd		TILE_START
 bStarted				db		0
 ddPointer				dd		0	
-
+hMineShow				dd		0, 0, 0
+hTimerShow				dd		0, 0, 0
 ddTimer					dd		0
+ddFlagCheat				dd		0
 
 .const
 szClassName				db		"MinesweeperClass", 0
@@ -265,8 +266,6 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 	local	@stPoint:POINT
 	invoke	GetDlgItem, hWnd, tileID
 	mov		@hTile, eax
-	;invoke  EnableWindow,@hTile,FALSE
-	;invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIcon1
 	invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
 	.if eax == hIconFlag
 		ret
@@ -279,7 +278,11 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 	;产生爆炸
 	.if byte ptr [ebx] == 0ffh
 		invoke SendMessage,@hTile,BM_SETIMAGE,IMAGE_ICON, hIconMineBroken
+		.if		ddFlagCheat
+				ret
+		.endif
 		invoke	KillTimer, hWinMain, ID_TIMER
+		invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, hIconSad
 		invoke	MessageBox, hWnd, offset szTextFail, offset szTextFailCaption, MB_OKCANCEL
 		.if		eax == IDOK
 				invoke	_CreateGame, hWinMain, IDR_CUSTOM
@@ -564,15 +567,11 @@ _ProcTile		proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 						mov		ax, bx
 						invoke	SendMessage, @hParent, WM_COMMAND, eax, lParam
 				.elseif	eax == WM_LBUTTONDOWN
-						invoke	LoadIcon, hInstance, ICO_SMILEY_OH
-						mov		@hIcon, eax
-						invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, eax
+						invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, hIconOh
 						invoke	CallWindowProc, lpDefProcTile, hWnd, uMsg, wParam, lParam
 						ret
 				.elseif	eax == WM_LBUTTONUP
-						invoke	LoadIcon, hInstance, ICO_SMILEY
-						mov		@hIcon, eax
-						invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, eax
+						invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, hIconSmile
 						invoke	CallWindowProc, lpDefProcTile, hWnd, uMsg, wParam, lParam
 						ret
 				.elseif	eax == WM_MBUTTONDOWN
@@ -675,8 +674,7 @@ _CreateGame		proc	uses eax ebx ecx edx esi edi, hWnd, level
 										eax, BORDER_SIZE, START_SIZE, START_SIZE,
 										hWnd, IDB_START, hInstance, NULL
 				mov		hStartButton, eax
-				invoke	LoadIcon, hInstance, ICO_SMILEY
-				invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, eax
+				invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, hIconSmile
 
 				; 创建剩余雷数窗口
 				xor	ecx,	ecx
@@ -717,24 +715,24 @@ _CreateGame		proc	uses eax ebx ecx edx esi edi, hWnd, level
 				sub		ebx, eax
 				xor		ecx, ecx
 				.while ecx < 3
-					push    ebx
-					xor		eax, eax
-					mov		eax, START_SIZE/2
-					mul		ecx
-					add		ebx, eax
-					mov		eax, ID_TIMER_SHOW1
-					add		eax, ecx
-					push	ecx
-					invoke	CreateWindowEx, NULL,
-											offset szButtonClass,
-											NULL,
-											WS_CHILD or WS_VISIBLE  or BS_ICON or BS_NOTIFY,
-											ebx , BORDER_SIZE + START_SIZE/4, START_SIZE/2-4, START_SIZE/2,
-											hWnd, eax, hInstance, NULL
-					pop		ecx
-					mov		hTimerShow[ecx*4],	eax
-					inc		ecx
-					pop		ebx
+						push    ebx
+						xor		eax, eax
+						mov		eax, START_SIZE/2
+						mul		ecx
+						add		ebx, eax
+						mov		eax, ID_TIMER_SHOW1
+						add		eax, ecx
+						push	ecx
+						invoke	CreateWindowEx, NULL,
+												offset szButtonClass,
+												NULL,
+												WS_CHILD or WS_VISIBLE  or BS_ICON or BS_NOTIFY,
+												ebx , BORDER_SIZE + START_SIZE/4, START_SIZE/2-4, START_SIZE/2,
+												hWnd, eax, hInstance, NULL
+						pop		ecx
+						mov		hTimerShow[ecx*4],	eax
+						inc		ecx
+						pop		ebx
 				.endw
 				invoke _ShowTime
 
@@ -866,6 +864,13 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 
 				mov		eax, uMsg
 				.if		eax == WM_CREATE
+						;加载图标
+						invoke	LoadIcon, hInstance, ICO_SMILEY
+						mov		hIconSmile, eax
+						invoke	LoadIcon, hInstance, ICO_SMILEY_SAD
+						mov		hIconSad, eax
+						invoke	LoadIcon, hInstance, ICO_SMILEY_OH
+						mov		hIconOh, eax
 						invoke	LoadIcon, hInstance, ICO_TILE_FLAG
 						mov		hIconFlag, eax
 						invoke	LoadIcon, hInstance, ICO_TILE_UNKNOWN
@@ -925,6 +930,17 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 						movzx	eax, ax
 						.if		eax == IDR_ABOUT
 								invoke	MessageBox, hWnd, offset szTextAbout, offset szTextAboutCaption, MB_OK
+						.elseif	eax == IDR_CHEAT
+								mov		ebx, eax
+								invoke	GetMenuState, hMenu, ebx, MF_BYCOMMAND
+								.if		eax == MF_CHECKED
+										mov		eax, MF_UNCHECKED
+										mov		ddFlagCheat, 0
+								.else
+										mov		eax, MF_CHECKED
+										mov		ddFlagCheat, 1
+								.endif
+								invoke	CheckMenuItem, hMenu, ebx, eax
 						.elseif	eax >= IDR_BEGINNER && eax <= IDR_CUSTOM
 								mov		@level, eax
 								.if		@level == IDR_CUSTOM
@@ -954,7 +970,6 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 								.elseif	ax == BN_CLICKED
 										invoke	_ClickTile, hWnd, @stPoint, BN_CLICKED, ebx
 								.endif
-								
 						.elseif	eax == IDB_START
 								mov		eax, wParam
 								shr		eax, 16

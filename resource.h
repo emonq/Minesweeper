@@ -31,7 +31,6 @@
 #define IDI_NUMBER5                     145
 #define IDI_NUMBER6                     146
 #define IDI_NUMBER7                     147
-#define IDI_ICON17                      148
 #define IDI_NUMBER8                     148
 #define IDI_NUMBER9                     149
 #define IDC_EDIT_ROW                    1013
@@ -44,13 +43,15 @@
 #define IDR_CUSTOM                      40011
 #define IDR_ABOUT                       40012
 #define IDA_ESC                         40015
+#define ID_40018                        40018
+#define IDR_CHEAT                       40019
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        150
-#define _APS_NEXT_COMMAND_VALUE         40018
+#define _APS_NEXT_COMMAND_VALUE         40020
 #define _APS_NEXT_CONTROL_VALUE         1014
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

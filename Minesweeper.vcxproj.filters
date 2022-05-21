@@ -60,6 +60,60 @@
     <Image Include="Assets\tile3.ico">
       <Filter>资源文件</Filter>
     </Image>
+    <Image Include="Assets\1.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\2.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\3.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\4.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\5.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\6.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\7.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\8.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\Number0.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\Number1.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\Number2.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\Number3.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\Number4.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\Number5.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\Number6.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\Number7.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\Number8.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="Assets\Number9.ico">
+      <Filter>资源文件</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <Manifest Include="Minesweeper.manifest">
