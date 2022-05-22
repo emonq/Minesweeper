@@ -988,16 +988,6 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 						.elseif	eax == IDA_ESC 
 								invoke	_Quit
 						.endif
-				.elseif	eax == WM_SYSCOMMAND
-						mov		eax, wParam
-						movzx	eax, ax
-						;½ûÖ¹×î´ó»¯
-						.if		eax == SC_MAXIMIZE
-								ret
-						.else
-								invoke	DefWindowProc, hWnd, uMsg, wParam, lParam
-								ret
-						.endif
 				.elseif eax == WM_CLOSE
 						invoke	DestroyWindow, hWinMain
 						invoke	PostQuitMessage, NULL
@@ -1040,10 +1030,13 @@ _WinMain		proc
 				mov		@stWndClass.hbrBackground, COLOR_WINDOW + 1
 				mov		@stWndClass.lpszClassName, offset szClassName
 				invoke	RegisterClassEx, addr @stWndClass
+				mov		eax, WS_OVERLAPPEDWINDOW
+				xor		eax, WS_THICKFRAME
+				xor		eax, WS_MAXIMIZEBOX
 				invoke	CreateWindowEx, WS_EX_CLIENTEDGE,						;dwExStyle
 										offset szClassName,						;lpClassName
 										offset szCaptionMain,					;lpWindowName
-										WS_OVERLAPPEDWINDOW xor WS_THICKFRAME,	;dwStyle
+										eax,	;dwStyle
 										CW_USEDEFAULT,							;x
 										CW_USEDEFAULT,							;y
 										600,									;nWidth
