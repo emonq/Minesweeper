@@ -79,6 +79,8 @@ IDC_EDIT_MINE			equ		1015
 BN_RCLICKED				equ		0AAH
 ;自定义按钮中键单击通知
 BN_MCLICKED				equ		0BBH
+;自定义双击通知
+BN_DBCLICK				equ		0CCH
 ;格子大小
 TILE_SIZE				equ		25
 ;开始按钮大小
@@ -189,7 +191,6 @@ ddMinesMaster			dd		500
 _CreateGame	proto stdcall hWnd:dword, level:dword
 
 _ShowNumber proc uses ecx ebx edx,handle:dword, number:dword
-
 	xor eax, eax
 	mov	eax, number
 	mov edx, 4
@@ -541,6 +542,9 @@ _ClickTile		proc	hWnd, stPoint:POINT, typeID, tileID
 						.elseif
 							invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconUnknown
 						.endif
+				;双击事件
+				.elseif	typeID == BN_DBCLICK
+						nop
 				;左键单击，清空标记
 				.else
 						invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
@@ -587,6 +591,13 @@ _ProcTile		proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 						invoke	GetDlgCtrlID, hWnd
 						mov		ebx, eax
 						mov		ax, BN_MCLICKED
+						shl		eax, 16
+						mov		ax, bx
+						invoke	SendMessage, @hParent, WM_COMMAND, eax, lParam
+				.elseif	eax == WM_LBUTTONDBLCLK
+						invoke	GetDlgCtrlID, hWnd
+						mov		ebx, eax
+						mov		ax, BN_DBCLICK
 						shl		eax, 16
 						mov		ax, bx
 						invoke	SendMessage, @hParent, WM_COMMAND, eax, lParam
@@ -978,12 +989,14 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 										invoke	_ClickTile, hWnd, @stPoint, BN_MCLICKED, ebx
 								.elseif	ax == BN_CLICKED
 										invoke	_ClickTile, hWnd, @stPoint, BN_CLICKED, ebx
+								.elseif	ax == BN_DBCLICK
+										invoke	_ClickTile, hWnd, @stPoint, BN_DBCLICK, ebx
 								.endif
 						.elseif	eax == IDB_START
 								mov		eax, wParam
 								shr		eax, 16
 								.if		ax == BN_CLICKED
-										invoke	_CreateGame, hWnd, IDR_CUSTOM							
+										invoke	_CreateGame, hWnd, IDR_CUSTOM
 								.endif
 						.elseif	eax == IDA_ESC 
 								invoke	_Quit
