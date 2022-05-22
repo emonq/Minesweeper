@@ -500,6 +500,10 @@ _ClickTile		proc	hWnd, stPoint:POINT, typeID, tileID
 				mov		@hTile, eax
 				;ÓÒ¼üµ¥»÷
 				.if		typeID == BN_RCLICKED
+						invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
+						.if eax == hIconFlag
+							ret
+						.endif
 						.if	bStarted == 1
 							mov	eax,stPoint.y
 							mul	dwColumn
