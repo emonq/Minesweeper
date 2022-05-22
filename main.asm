@@ -243,7 +243,6 @@ _ShowMineCount	proc uses edx eax ebx ecx
 	invoke _ShowNumber,ecx , @
 	mov @, edx
 	invoke _ShowNumber, hMineShow[4], @
-
 	xor	eax, eax
 	ret
 _ShowMineCount	endp	
@@ -259,7 +258,7 @@ _DisableTiles	proc uses eax esi edi, isWin
 						add		edi, ddPointer
 						.if		byte ptr [edi] == 0ffh && !isWin
 								invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
-								.if		eax == hIconFlag || isWin
+								.if		eax == hIconFlag
 										invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconMineCommon
 								.elseif	eax != hIconMineBroken
 										invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconMineRed
