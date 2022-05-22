@@ -156,6 +156,7 @@ hMineShow				dd		0, 0, 0
 hTimerShow				dd		0, 0, 0
 ddTimer					dd		0
 ddFlagCheat				dd		0
+ddGameOver				dd		0
 
 .const
 szClassName				db		"MinesweeperClass", 0
@@ -247,11 +248,24 @@ _ShowMineCount	proc uses edx eax ebx ecx
 	ret
 _ShowMineCount	endp	
 
-_DisableTiles	proc uses eax esi
+_DisableTiles	proc uses eax esi edi, isWin
+				local	@hTile
 				mov		esi, dwTileID
 				.while	esi > TILE_START
 						invoke	GetDlgItem, hWinMain, esi
-						invoke	EnableWindow, eax, FALSE
+						mov		@hTile, eax
+						mov		edi, esi
+						sub		edi, 60001
+						add		edi, ddPointer
+						.if		byte ptr [edi] == 0ffh && !isWin
+								invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
+								.if		eax == hIconFlag || isWin
+										invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconMineCommon
+								.elseif	eax != hIconMineBroken
+										invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconMineRed
+								.endif
+						.endif
+						invoke	EnableWindow, @hTile, FALSE
 						dec		esi
 				.endw
 				ret
@@ -266,6 +280,9 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 	local	i
 	local	j
 	local	@stPoint:POINT
+	.if		ddGameOver
+			ret
+	.endif
 	invoke	GetDlgItem, hWnd, tileID
 	mov		@hTile, eax
 	invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
@@ -283,13 +300,14 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 		.if		ddFlagCheat
 				ret
 		.endif
+		mov		ddGameOver, 1
 		invoke	KillTimer, hWinMain, ID_TIMER
 		invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, hIconSad
 		invoke	MessageBox, hWnd, offset szTextFail, offset szTextFailCaption, MB_OKCANCEL
 		.if		eax == IDOK
 				invoke	_CreateGame, hWinMain, IDR_CUSTOM
 		.else
-				invoke	_DisableTiles
+				invoke	_DisableTiles, FALSE
 		.endif
 	.elseif byte ptr [ebx] < 9
 		.if byte ptr [ebx] == 0	
@@ -304,9 +322,9 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 				.if		eax == IDOK
 						invoke	_CreateGame, hWinMain, IDR_CUSTOM
 				.else
-						invoke	_DisableTiles
+						invoke	_DisableTiles, TRUE
 				.endif
-				
+				mov		ddGameOver, 1
 			.endif
 			mov	i,0
 			.while i < 3
@@ -348,7 +366,7 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 						add	eax,ddPointer
 						dec	eax
 						mov	edi,eax		
-						.if	ddPointer == 0
+						.if	ddGameOver
 							ret
 						.endif
 						.if	byte ptr [edi] != 9 
@@ -377,8 +395,9 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 				.if		eax == IDOK
 						invoke	_CreateGame, hWinMain, IDR_CUSTOM
 				.else
-						invoke	_DisableTiles
+						invoke	_DisableTiles, TRUE
 				.endif
+				mov		ddGameOver, 1
 			.endif
 		.endif
 	.endif
@@ -735,6 +754,7 @@ _CreateGame		proc	uses eax ebx ecx edx esi edi, hWnd, level
 				local	@stRect:RECT
 				local	@dwCx:WORD, @dwCy:WORD
 				local	@dwX:WORD, @dwY:WORD
+				mov		ddGameOver, 0
 				mov		byte ptr bStarted,0
 				mov		ddPointer,0
 				mov		ddMineSweepedCount,0
