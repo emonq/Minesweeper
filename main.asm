@@ -347,7 +347,10 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 						sub	eax,TILE_START
 						add	eax,ddPointer
 						dec	eax
-						mov	edi,eax					
+						mov	edi,eax		
+						.if	ddPointer == 0
+							ret
+						.endif
 						.if	byte ptr [edi] != 9 
 							invoke _Show,hWnd,@stPoint,@newtileID
 						.endif
