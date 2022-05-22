@@ -382,6 +382,98 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 	ret
 _Show	endp
 
+_DoubleClick proc uses edi ebx eax esi edi edx ecx,hWnd,stPoint:POINT,tileID,Number
+	local @newtileID
+	local @newstPoint:POINT
+	local	num
+	local	i
+	local	j
+	mov		i,0
+	mov		num,0
+	.while	i < 3
+		mov	j,0
+		.while j < 3
+		xor	edx,edx
+		mov	dx,dwColumn
+		dec	dx
+		.if	(stPoint.x == 0 && i == 0) || (stPoint.x == edx && i == 2)
+			inc	j
+			.continue
+		.endif
+		xor	edx,edx
+		mov	dx,dwRow
+		dec	dx
+		.if (stPoint.y == 0 && j == 0) || (stPoint.y == edx && j == 2)
+			inc	j
+			.continue
+		.endif
+		mov	eax,j
+		mul	dwColumn
+		add	eax,tileID
+		sub	ax,dwColumn
+		add	eax,i
+		dec	eax
+		mov	@newtileID,eax
+		invoke	GetDlgItem, hWnd, @newtileID
+		invoke	SendMessage, eax, BM_GETIMAGE, IMAGE_ICON, 0
+		.if	eax == hIconFlag
+			inc	num
+		.endif
+		inc	j
+		.endw
+		inc	i
+	.endw
+	mov	eax,num
+	.if	eax == 	Number
+		mov		i,0
+		.while	i < 3
+		mov	j,0
+		.while j < 3
+		xor edx,edx
+		mov	dx,dwColumn
+		dec	dx
+		.if	(stPoint.x == 0 && i == 0) || (stPoint.x == edx && i == 2)
+			inc	j
+			.continue
+		.endif
+		xor	edx,edx
+		mov	dx,dwRow
+		dec	dx
+		.if (stPoint.y == 0 && j == 0) || (stPoint.y == edx && j == 2)
+			inc	j
+			.continue
+		.endif
+		mov	eax,j
+		mul	dwColumn
+		add	eax,tileID
+		sub	ax,dwColumn
+		add	eax,i
+		dec	eax
+		mov	@newtileID,eax
+		invoke	GetDlgItem, hWnd, @newtileID
+		invoke	SendMessage, @newtileID, BM_GETIMAGE, IMAGE_ICON, 0
+		.if	eax == 0
+			mov	eax,stPoint.x
+			add	eax,i
+			dec	eax
+			mov	@newstPoint.x,eax
+			mov	eax,stPoint.y
+			add	eax,j
+			dec	eax
+			mov	@newstPoint.y,eax
+			invoke	_Show,hWnd,@newstPoint,@newtileID
+			.if	ddPointer == 0
+				ret
+			.endif
+		.endif
+		inc	j
+		.endw
+		inc	i
+	.endw
+	.endif
+	ret
+_DoubleClick	endp
+
 ;初始化雷
 _Init	proc	uses edi ebx eax esi edi edx ecx,stPoint:POINT
 		local	@size:word
@@ -544,7 +636,34 @@ _ClickTile		proc	hWnd, stPoint:POINT, typeID, tileID
 						.endif
 				;双击事件
 				.elseif	typeID == BN_DBCLICK
-						nop
+						.if	bStarted == 1
+							mov	ebx,tileID
+							sub	ebx,TILE_START
+							dec	ebx
+							add	ebx,ddPointer
+							.if	byte ptr [ebx] == 9
+								invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
+								.if	eax == hIconTileCommon
+									invoke _DoubleClick,hWnd,stPoint,tileID,0
+								.elseif eax == hIcon1
+									invoke _DoubleClick,hWnd,stPoint,tileID,1
+								.elseif eax == hIcon2
+									invoke _DoubleClick,hWnd,stPoint,tileID,2
+								.elseif eax == hIcon3
+									invoke _DoubleClick,hWnd,stPoint,tileID,3
+								.elseif eax == hIcon4
+									invoke _DoubleClick,hWnd,stPoint,tileID,4
+								.elseif eax == hIcon5
+									invoke _DoubleClick,hWnd,stPoint,tileID,5
+								.elseif eax == hIcon6
+									invoke _DoubleClick,hWnd,stPoint,tileID,6
+								.elseif eax == hIcon7
+									invoke _DoubleClick,hWnd,stPoint,tileID,7
+								.elseif eax == hIcon8
+									invoke _DoubleClick,hWnd,stPoint,tileID,8
+								.endif
+							.endif
+						.endif
 				;左键单击，清空标记
 				.else
 						invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
