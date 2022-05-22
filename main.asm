@@ -318,12 +318,12 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 			.if ddMineSweepedCount == eax
 				invoke	KillTimer, hWinMain ,ID_TIMER
 				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OKCANCEL
+				mov		ddGameOver, 1
 				.if		eax == IDOK
 						invoke	_CreateGame, hWinMain, IDR_CUSTOM
 				.else
 						invoke	_DisableTiles, TRUE
 				.endif
-				mov		ddGameOver, 1
 			.endif
 			mov	i,0
 			.while i < 3
@@ -391,12 +391,12 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 			.if ddMineSweepedCount == eax
 				invoke	KillTimer, hWinMain ,ID_TIMER
 				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OKCANCEL
+				mov		ddGameOver, 1
 				.if		eax == IDOK
 						invoke	_CreateGame, hWinMain, IDR_CUSTOM
 				.else
 						invoke	_DisableTiles, TRUE
 				.endif
-				mov		ddGameOver, 1
 			.endif
 		.endif
 	.endif
