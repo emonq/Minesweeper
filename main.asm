@@ -61,6 +61,7 @@ IDR_MASTER				equ		40010
 IDR_CUSTOM				equ		40011
 IDR_ABOUT				equ		40012
 IDR_CHEAT				equ		40019
+IDR_BEST				equ		40022
 
 ;加速键定义
 IDR_ACCELERATOR			equ		112
@@ -142,6 +143,7 @@ hNumber9		dd				?
 hStartButton	dd				?
 hMenu			dd				?
 lpDefProcTile	dd				?
+szProfileName	dd				MAX_PATH dup(?)
 
 .data
 ddFlagCount				dd		0
@@ -158,6 +160,11 @@ hTimerShow				dd		0, 0, 0
 ddTimer					dd		0
 ddFlagCheat				dd		0
 ddGameOver				dd		0
+ddBestBeginner			dd		0
+ddBestIntermediate		dd		0
+ddBestAdvanced			dd		0
+ddBestMaster			dd		0
+ddLevel					dd		IDR_BEGINNER
 
 .const
 szClassName				db		"MinesweeperClass", 0
@@ -165,16 +172,26 @@ szCaptionMain			db		"扫雷", 0
 szButtonClass			db		"button", 0
 szStaticClass			db		"static", 0
 szTextAboutCaption		db		"关于扫雷",0
+szTextBestCaption		db		"最佳成绩",0
 szTextFailCaption		db		"失败",0
 szTextSucessCaption		db		"胜利",0
 szTextFail				db		"您触雷了，游戏失败",0ah,"要开始新游戏吗？",0
 szTextSucess			db		"真厉害，您胜利了！",0ah,"要开始新游戏吗？",0
 szTextAbout				db		"这是一个经典Windows扫雷游戏的汇编版本复刻。",0
+szTextBestFmt			db		"入门：%s",0ah,"中级：%s",0ah,"高级：%s",0ah,"大师：%s",0
+szTimeFmt				db		"%d秒",0
 szDigitFmt				db		"%d",0
+szNA					db		"无",0
 szError					db		"错误",0
 szRowExceedFmt			db		"最大行数不能超过%d",0
 szColExceedFmt			db		"最大列数不能超过%d",0
 szMineExceedFmt			db		"雷数不能大于%d",0
+szFileName				db		"\data.ini",0
+szSectionName			db		"game",0
+szKeyNameBeginner		db		"Beginner",0
+szKeyNameIntermediate	db		"Intermediate",0
+szKeyNameAdvanced		db		"Advanced",0
+szKeyNameMaster			db		"Master",0
 dwRowBeginner			dw		10
 dwColBeginner			dw		10
 ddMinesBeginner			dd		10
@@ -191,6 +208,71 @@ ddMinesMaster			dd		500
 .code
 
 _CreateGame	proto stdcall hWnd:dword, level:dword
+
+_ReadData		proc	uses esi ecx eax
+				local	@buf[512]:byte
+				invoke	GetCurrentDirectory, MAX_PATH, offset szProfileName
+				mov		esi, offset szProfileName
+				invoke	lstrlen, esi
+				mov		ecx, offset szFileName
+				.if		byte ptr [esi+eax-1] == '\'
+						inc	ecx
+				.endif
+				invoke	lstrcat, esi, ecx
+				invoke	GetPrivateProfileInt, offset szSectionName, offset szKeyNameBeginner, 0, offset szProfileName
+				mov		ddBestBeginner, eax
+				invoke	GetPrivateProfileInt, offset szSectionName, offset szKeyNameIntermediate, 0, offset szProfileName
+				mov		ddBestIntermediate, eax
+				invoke	GetPrivateProfileInt, offset szSectionName, offset szKeyNameAdvanced, 0, offset szProfileName
+				mov		ddBestAdvanced, eax
+				invoke	GetPrivateProfileInt, offset szSectionName, offset szKeyNameMaster, 0, offset szProfileName
+				mov		ddBestMaster, eax
+				ret
+_ReadData		endp
+
+_WriteData		proc	uses esi ecx eax
+				local	@buf[500]:byte
+				invoke	wsprintf, addr @buf, offset szDigitFmt, ddBestBeginner
+				invoke	WritePrivateProfileString, offset szSectionName, offset szKeyNameBeginner, addr @buf, offset szProfileName
+				invoke	wsprintf, addr @buf, offset szDigitFmt, ddBestIntermediate
+				invoke	WritePrivateProfileString, offset szSectionName, offset szKeyNameIntermediate, addr @buf, offset szProfileName
+				invoke	wsprintf, addr @buf, offset szDigitFmt, ddBestAdvanced
+				invoke	WritePrivateProfileString, offset szSectionName, offset szKeyNameAdvanced, addr @buf, offset szProfileName
+				invoke	wsprintf, addr @buf, offset szDigitFmt, ddBestMaster
+				invoke	WritePrivateProfileString, offset szSectionName, offset szKeyNameMaster, addr @buf, offset szProfileName
+				ret
+_WriteData		endp
+
+_ShowBestTime	proc hWnd
+				local	@bestBeginner[100]:byte
+				local	@bestIntermediate[100]:byte
+				local	@bestAdvanced[100]:byte
+				local	@bestMaster[100]:byte
+				local	@buf[200]:byte
+				.if		ddBestBeginner == 0
+						invoke	wsprintf, addr @bestBeginner, offset szNA
+				.else
+						invoke	wsprintf, addr @bestBeginner, offset szTimeFmt, ddBestBeginner
+				.endif
+				.if		ddBestIntermediate == 0
+						invoke	wsprintf, addr @bestIntermediate, offset szNA
+				.else
+						invoke	wsprintf, addr @bestIntermediate, offset szTimeFmt, ddBestIntermediate
+				.endif
+				.if		ddBestAdvanced == 0
+						invoke	wsprintf, addr @bestAdvanced, offset szNA
+				.else
+						invoke	wsprintf, addr @bestAdvanced, offset szTimeFmt, ddBestAdvanced
+				.endif
+				.if		ddBestMaster == 0
+						invoke	wsprintf, addr @bestMaster, offset szNA
+				.else
+						invoke	wsprintf, addr @bestMaster, offset szTimeFmt, ddBestMaster
+				.endif
+				invoke	wsprintf, addr @buf, offset szTextBestFmt, addr @bestBeginner, addr @bestIntermediate, addr @bestAdvanced, addr @bestMaster
+				invoke	MessageBox, hWnd, addr @buf, offset szTextBestCaption, MB_OK
+				ret
+_ShowBestTime	endp
 
 _ShowNumber proc uses ecx ebx edx,handle:dword, number:dword
 	xor eax, eax
@@ -248,33 +330,52 @@ _ShowMineCount	proc uses edx eax ebx ecx
 	ret
 _ShowMineCount	endp	
 
-_GameOver	proc uses eax esi edi, isWin
-				local	@hTile
-				mov		esi, dwTileID
-				mov		ddGameOver, 1
-				.if		isWin
-						invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, hIconWin
-				.else
-						invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, hIconSad
-				.endif
-				.while	esi > TILE_START
-						invoke	GetDlgItem, hWinMain, esi
-						mov		@hTile, eax
-						mov		edi, esi
-						sub		edi, 60001
-						add		edi, ddPointer
-						.if		byte ptr [edi] == 0ffh && !isWin
-								invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
-								.if		eax == hIconFlag
-										invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconMineCommon
-								.elseif	eax != hIconMineBroken
-										invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconMineRed
-								.endif
-						.endif
-						invoke	EnableWindow, @hTile, FALSE
-						dec		esi
-				.endw
-				ret
+_GameOver	proc uses eax ebx esi edi, isWin
+			local	@hTile
+			mov		esi, dwTileID
+			mov		ddGameOver, 1
+			.if		isWin
+					invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, hIconWin
+					mov		ebx, ddTimer
+					.if		ddLevel == IDR_BEGINNER
+							.if		ebx < ddBestBeginner || ddBestBeginner == 0
+									mov		ddBestBeginner, ebx
+							.endif
+					.elseif	ddLevel == IDR_INTERMEDIATE
+							.if		ebx < ddBestIntermediate || ddBestIntermediate == 0
+									mov		ddBestIntermediate, ebx
+							.endif
+					.elseif	ddLevel == IDR_ADVANCED
+							.if		ebx < ddBestAdvanced || ddBestAdvanced == 0
+									mov		ddBestAdvanced, ebx
+							.endif
+					.elseif	ddLevel == IDR_MASTER
+							.if		ebx < ddBestMaster || ddBestMaster == 0
+									mov		ddBestMaster, ebx
+							.endif
+					.endif
+					invoke	_WriteData
+			.else
+					invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, hIconSad
+			.endif
+			.while	esi > TILE_START
+					invoke	GetDlgItem, hWinMain, esi
+					mov		@hTile, eax
+					mov		edi, esi
+					sub		edi, 60001
+					add		edi, ddPointer
+					.if		byte ptr [edi] == 0ffh && !isWin
+							invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
+							.if		eax == hIconFlag
+									invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconMineCommon
+							.elseif	eax != hIconMineBroken
+									invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconMineRed
+							.endif
+					.endif
+					invoke	EnableWindow, @hTile, FALSE
+					dec		esi
+			.endw
+			ret
 _GameOver	endp
 
 ;按下后数字显示
@@ -761,6 +862,8 @@ _CreateGame		proc	uses eax ebx ecx edx esi edi, hWnd, level
 				mov		ddTimer, 0
 				invoke	KillTimer, hWinMain ,ID_TIMER
 				invoke	GlobalFree,ddPointer
+				mov		eax, level
+				mov		ddLevel, eax
 				.if		level == IDR_BEGINNER
 						push	dwRowBeginner
 						pop		dwRow
@@ -1022,7 +1125,7 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 				local	@hFont
 				local	@hOldFont
 				local	@level
-
+				invoke	_ReadData
 				mov		eax, uMsg
 				.if		eax == WM_CREATE
 						;加载图标
@@ -1093,6 +1196,8 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 						movzx	eax, ax
 						.if		eax == IDR_ABOUT
 								invoke	MessageBox, hWnd, offset szTextAbout, offset szTextAboutCaption, MB_OK
+						.elseif	eax == IDR_BEST
+								invoke	_ShowBestTime, hWnd
 						.elseif	eax == IDR_CHEAT
 								mov		ebx, eax
 								invoke	GetMenuState, hMenu, ebx, MF_BYCOMMAND

@@ -45,13 +45,16 @@
 #define IDA_ESC                         40015
 #define ID_40018                        40018
 #define IDR_CHEAT                       40019
+#define ID_40020                        40020
+#define ID_BEST                         40021
+#define IDR_BEST                        40022
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        150
-#define _APS_NEXT_COMMAND_VALUE         40020
+#define _APS_NEXT_COMMAND_VALUE         40023
 #define _APS_NEXT_CONTROL_VALUE         1014
 #define _APS_NEXT_SYMED_VALUE           101
 #endif

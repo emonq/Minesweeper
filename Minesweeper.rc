@@ -116,7 +116,7 @@ IDI_NUMBER9             ICON                    "Assets\\Number9.ico"
 
 IDR_MENU MENU
 BEGIN
-    POPUP "难度"
+    POPUP "游戏"
     BEGIN
         MENUITEM "入门",                          IDR_BEGINNER
         MENUITEM "中级",                          IDR_INTERMEDIATE
@@ -125,6 +125,8 @@ BEGIN
         MENUITEM "自定义",                         IDR_CUSTOM
         MENUITEM SEPARATOR
         MENUITEM "无赖模式",                        IDR_CHEAT
+        MENUITEM SEPARATOR
+        MENUITEM "最佳成绩",                        IDR_BEST
     END
     POPUP "帮助"
     BEGIN

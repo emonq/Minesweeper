@@ -3,3 +3,4 @@
 /Minesweeper.vcxproj
 /x64/
 /Release/
+*.ini
