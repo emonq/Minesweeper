@@ -128,6 +128,7 @@ hIcon8			dd				?
 hIconSad		dd				?
 hIconSmile		dd				?
 hIconOh			dd				?
+hIconWin		dd				?
 hNumber0		dd				?
 hNumber1		dd				?
 hNumber2		dd				?
@@ -247,9 +248,15 @@ _ShowMineCount	proc uses edx eax ebx ecx
 	ret
 _ShowMineCount	endp	
 
-_DisableTiles	proc uses eax esi edi, isWin
+_GameOver	proc uses eax esi edi, isWin
 				local	@hTile
 				mov		esi, dwTileID
+				mov		ddGameOver, 1
+				.if		isWin
+						invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, hIconWin
+				.else
+						invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, hIconSad
+				.endif
 				.while	esi > TILE_START
 						invoke	GetDlgItem, hWinMain, esi
 						mov		@hTile, eax
@@ -268,7 +275,7 @@ _DisableTiles	proc uses eax esi edi, isWin
 						dec		esi
 				.endw
 				ret
-_DisableTiles	endp
+_GameOver	endp
 
 ;按下后数字显示
 _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
@@ -299,14 +306,11 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 		.if		ddFlagCheat
 				ret
 		.endif
-		mov		ddGameOver, 1
 		invoke	KillTimer, hWinMain, ID_TIMER
-		invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, hIconSad
+		invoke	_GameOver, FALSE
 		invoke	MessageBox, hWnd, offset szTextFail, offset szTextFailCaption, MB_OKCANCEL
 		.if		eax == IDOK
 				invoke	_CreateGame, hWinMain, IDR_CUSTOM
-		.else
-				invoke	_DisableTiles, FALSE
 		.endif
 	.elseif byte ptr [ebx] < 9
 		.if byte ptr [ebx] == 0	
@@ -317,12 +321,10 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 			mov	eax,ddNoneMineCount
 			.if ddMineSweepedCount == eax
 				invoke	KillTimer, hWinMain ,ID_TIMER
+				invoke	_GameOver, TRUE
 				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OKCANCEL
-				mov		ddGameOver, 1
 				.if		eax == IDOK
 						invoke	_CreateGame, hWinMain, IDR_CUSTOM
-				.else
-						invoke	_DisableTiles, TRUE
 				.endif
 			.endif
 			mov	i,0
@@ -390,12 +392,10 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 			mov	eax,ddNoneMineCount
 			.if ddMineSweepedCount == eax
 				invoke	KillTimer, hWinMain ,ID_TIMER
+				invoke	_GameOver, TRUE
 				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OKCANCEL
-				mov		ddGameOver, 1
 				.if		eax == IDOK
 						invoke	_CreateGame, hWinMain, IDR_CUSTOM
-				.else
-						invoke	_DisableTiles, TRUE
 				.endif
 			.endif
 		.endif
@@ -1032,6 +1032,8 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 						mov		hIconSad, eax
 						invoke	LoadIcon, hInstance, ICO_SMILEY_OH
 						mov		hIconOh, eax
+						invoke	LoadIcon, hInstance, ICO_SMILEY_WIN
+						mov		hIconWin, eax
 						invoke	LoadIcon, hInstance, ICO_TILE_FLAG
 						mov		hIconFlag, eax
 						invoke	LoadIcon, hInstance, ICO_TILE_UNKNOWN
