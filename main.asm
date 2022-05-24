@@ -211,7 +211,6 @@ ddMinesMaster			dd		300
 _CreateGame	proto stdcall hWnd:dword
 
 _ReadData		proc	uses esi ecx eax
-				local	@buf[512]:byte
 				invoke	GetCurrentDirectory, MAX_PATH, offset szProfileName
 				mov		esi, offset szProfileName
 				invoke	lstrlen, esi
@@ -722,7 +721,6 @@ _Init	endp
 
 ;响应Tile的点击事件
 _ClickTile		proc	hWnd, stPoint:POINT, typeID, tileID
-				local	@szTemp[128]:byte
 				local	@hTile
 				invoke	GetDlgItem, hWnd, tileID
 				mov		@hTile, eax
@@ -822,7 +820,6 @@ _ClickTile		endp
 
 _ProcTile		proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 				local	@hParent
-				local	@hIcon
 				invoke	GetParent, hWnd
 				mov		@hParent, eax
 				mov		eax, uMsg
@@ -1129,14 +1126,7 @@ _Quit			proc
 _Quit			endp
 
 _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
-				local	@stPs:PAINTSTRUCT
-				local	@stRect:RECT
 				local	@stPoint:POINT
-				local	@hDc
-				local	@hSysMenu
-				local	@hStartButton
-				local	@hFont
-				local	@hOldFont
 				mov		eax, uMsg
 				.if		eax == WM_CREATE
 						invoke	_ReadData
