@@ -384,7 +384,7 @@ _GameOver	proc uses eax ebx esi edi, isWin
 _GameOver	endp
 
 ;按下后数字显示
-_Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
+_Show	proc	uses ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 	local	@myOffset	;当前点击坐标的偏移量
 	local	@newOffset	;要拓展的坐标的偏移量
 	local	@newtileID
@@ -417,6 +417,8 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 		invoke	MessageBox, hWnd, offset szTextFail, offset szTextFailCaption, MB_OKCANCEL
 		.if		eax == IDOK
 				invoke	_CreateGame, hWinMain
+				mov		eax, 1
+				ret
 		.endif
 	.elseif byte ptr [ebx] < 9
 		.if byte ptr [ebx] == 0	
@@ -431,6 +433,8 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OKCANCEL
 				.if		eax == IDOK
 						invoke	_CreateGame, hWinMain
+						mov		eax, 1
+						ret
 				.endif
 			.endif
 			mov	i,0
@@ -475,6 +479,9 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 						mov	edi,eax		
 						.if	byte ptr [edi] != 9 
 							invoke _Show,hWnd,@stPoint,@newtileID
+							.if		eax
+									ret
+							.endif
 						.endif
 					.endif
 					inc j
@@ -499,10 +506,13 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OKCANCEL
 				.if		eax == IDOK
 						invoke	_CreateGame, hWinMain
+						mov		eax, 1
+						ret
 				.endif
 			.endif
 		.endif
 	.endif
+	xor		eax, eax
 	ret
 _Show	endp
 
