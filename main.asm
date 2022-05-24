@@ -207,7 +207,7 @@ ddMinesMaster			dd		500
 
 .code
 
-_CreateGame	proto stdcall hWnd:dword, level:dword
+_CreateGame	proto stdcall hWnd:dword
 
 _ReadData		proc	uses esi ecx eax
 				local	@buf[512]:byte
@@ -333,6 +333,7 @@ _ShowMineCount	endp
 _GameOver	proc uses eax ebx esi edi, isWin
 			local	@hTile
 			mov		esi, dwTileID
+			invoke	KillTimer, hWinMain ,ID_TIMER
 			mov		ddGameOver, 1
 			.if		isWin
 					invoke	SendMessage, hStartButton, BM_SETIMAGE, IMAGE_ICON, hIconWin
@@ -364,12 +365,16 @@ _GameOver	proc uses eax ebx esi edi, isWin
 					mov		edi, esi
 					sub		edi, 60001
 					add		edi, ddPointer
-					.if		byte ptr [edi] == 0ffh && !isWin
-							invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
-							.if		eax == hIconFlag
+					.if		byte ptr [edi] == 0ffh
+							.if		isWin
 									invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconMineCommon
-							.elseif	eax != hIconMineBroken
-									invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconMineRed
+							.else
+									invoke	SendMessage, @hTile, BM_GETIMAGE, IMAGE_ICON, 0
+									.if		eax == hIconFlag
+											invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconMineCommon
+									.elseif	eax != hIconMineBroken
+											invoke	SendMessage, @hTile, BM_SETIMAGE, IMAGE_ICON, hIconMineRed
+									.endif
 							.endif
 					.endif
 					invoke	EnableWindow, @hTile, FALSE
@@ -411,7 +416,7 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 		invoke	_GameOver, FALSE
 		invoke	MessageBox, hWnd, offset szTextFail, offset szTextFailCaption, MB_OKCANCEL
 		.if		eax == IDOK
-				invoke	_CreateGame, hWinMain, IDR_CUSTOM
+				invoke	_CreateGame, hWinMain
 		.endif
 	.elseif byte ptr [ebx] < 9
 		.if byte ptr [ebx] == 0	
@@ -420,12 +425,12 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 			mov byte ptr [ebx],al
 			inc	ddMineSweepedCount 
 			mov	eax,ddNoneMineCount
+			;赢了
 			.if ddMineSweepedCount == eax
-				invoke	KillTimer, hWinMain ,ID_TIMER
 				invoke	_GameOver, TRUE
 				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OKCANCEL
 				.if		eax == IDOK
-						invoke	_CreateGame, hWinMain, IDR_CUSTOM
+						invoke	_CreateGame, hWinMain
 				.endif
 			.endif
 			mov	i,0
@@ -468,9 +473,6 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 						add	eax,ddPointer
 						dec	eax
 						mov	edi,eax		
-						.if	ddGameOver
-							ret
-						.endif
 						.if	byte ptr [edi] != 9 
 							invoke _Show,hWnd,@stPoint,@newtileID
 						.endif
@@ -491,12 +493,12 @@ _Show	proc	uses eax ebx ecx edi esi, hWnd,stPoint:POINT,tileID
 			mov byte ptr [ebx],al
 			inc	ddMineSweepedCount
 			mov	eax,ddNoneMineCount
+			;赢了
 			.if ddMineSweepedCount == eax
-				invoke	KillTimer, hWinMain ,ID_TIMER
 				invoke	_GameOver, TRUE
 				invoke	MessageBox, hWnd, offset szTextSucess, offset szTextSucessCaption, MB_OKCANCEL
 				.if		eax == IDOK
-						invoke	_CreateGame, hWinMain, IDR_CUSTOM
+						invoke	_CreateGame, hWinMain
 				.endif
 			.endif
 		.endif
@@ -850,7 +852,7 @@ _ProcTile		proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 				ret
 _ProcTile		endp
 
-_CreateGame		proc	uses eax ebx ecx edx esi edi, hWnd, level
+_CreateGame		proc	uses eax ebx ecx edx esi edi, hWnd
 				local	@stRect:RECT
 				local	@dwCx:WORD, @dwCy:WORD
 				local	@dwX:WORD, @dwY:WORD
@@ -862,30 +864,30 @@ _CreateGame		proc	uses eax ebx ecx edx esi edi, hWnd, level
 				mov		ddTimer, 0
 				invoke	KillTimer, hWinMain ,ID_TIMER
 				invoke	GlobalFree,ddPointer
-				mov		eax, level
+				mov		eax, ddLevel
 				mov		ddLevel, eax
-				.if		level == IDR_BEGINNER
+				.if		ddLevel == IDR_BEGINNER
 						push	dwRowBeginner
 						pop		dwRow
 						push	dwColBeginner
 						pop		dwColumn
 						push	ddMinesBeginner
 						pop		ddMineTotalCount
-				.elseif	level == IDR_INTERMEDIATE
+				.elseif	ddLevel == IDR_INTERMEDIATE
 						push	dwRowIntermediate
 						pop		dwRow
 						push	dwColIntermediate
 						pop		dwColumn
 						push	ddMinesIntermediate
 						pop		ddMineTotalCount
-				.elseif	level == IDR_ADVANCED
+				.elseif	ddLevel == IDR_ADVANCED
 						push	dwRowAdvanced
 						pop		dwRow
 						push	dwColAdvanced
 						pop		dwColumn
 						push	ddMinesAdvanced
 						pop		ddMineTotalCount
-				.elseif	level == IDR_MASTER
+				.elseif	ddLevel == IDR_MASTER
 						push	dwRowMaster
 						pop		dwRow
 						push	dwColMaster
@@ -1124,10 +1126,9 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 				local	@hStartButton
 				local	@hFont
 				local	@hOldFont
-				local	@level
-				invoke	_ReadData
 				mov		eax, uMsg
 				.if		eax == WM_CREATE
+						invoke	_ReadData
 						;加载图标
 						invoke	LoadIcon, hInstance, ICO_SMILEY
 						mov		hIconSmile, eax
@@ -1189,7 +1190,7 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 						mov		hNumber9,	eax
 
 						invoke	CheckMenuRadioItem, hMenu, IDR_BEGINNER, IDR_CUSTOM, IDR_BEGINNER, MF_BYCOMMAND
-						invoke	_CreateGame, hWnd, IDR_BEGINNER
+						invoke	_CreateGame, hWnd
 
 				.elseif	eax == WM_COMMAND
 						mov		eax, wParam
@@ -1210,16 +1211,16 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 								.endif
 								invoke	CheckMenuItem, hMenu, ebx, eax
 						.elseif	eax >= IDR_BEGINNER && eax <= IDR_CUSTOM
-								mov		@level, eax
-								.if		@level == IDR_CUSTOM
+								mov		ddLevel, eax
+								.if		ddLevel == IDR_CUSTOM
 										invoke	DialogBoxParam, hInstance, IDD_CUSTOM, hWnd, _CustomDlgProc, NULL
 										.if		eax == TRUE
-												invoke	_CreateGame, hWnd, IDR_CUSTOM
-												invoke	CheckMenuRadioItem, hMenu, IDR_BEGINNER, IDR_CUSTOM, @level, MF_BYCOMMAND
+												invoke	CheckMenuRadioItem, hMenu, IDR_BEGINNER, IDR_CUSTOM, ddLevel, MF_BYCOMMAND
+												invoke	_CreateGame, hWnd
 										.endif
 								.else
-										invoke	CheckMenuRadioItem, hMenu, IDR_BEGINNER, IDR_CUSTOM, @level, MF_BYCOMMAND
-										invoke	_CreateGame, hWnd, @level
+										invoke	CheckMenuRadioItem, hMenu, IDR_BEGINNER, IDR_CUSTOM, ddLevel, MF_BYCOMMAND
+										invoke	_CreateGame, hWnd
 								.endif
 						.elseif	eax > TILE_START && eax <= dwTileID
 								sub		eax, 60001
@@ -1244,7 +1245,7 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 								mov		eax, wParam
 								shr		eax, 16
 								.if		ax == BN_CLICKED
-										invoke	_CreateGame, hWnd, IDR_CUSTOM
+										invoke	_CreateGame, hWnd
 								.endif
 						.elseif	eax == IDA_ESC 
 								invoke	_Quit
