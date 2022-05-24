@@ -192,6 +192,7 @@ szKeyNameBeginner		db		"Beginner",0
 szKeyNameIntermediate	db		"Intermediate",0
 szKeyNameAdvanced		db		"Advanced",0
 szKeyNameMaster			db		"Master",0
+szCaptionMainCheating	db		"扫雷无赖版",0
 dwRowBeginner			dw		10
 dwColBeginner			dw		10
 ddMinesBeginner			dd		10
@@ -1212,12 +1213,24 @@ _ProcWinMain	proc	uses ebx edi esi, hWnd, uMsg, wParam, lParam
 						.elseif	eax == IDR_CHEAT
 								mov		ebx, eax
 								invoke	GetMenuState, hMenu, ebx, MF_BYCOMMAND
+								;关闭无赖模式
 								.if		eax == MF_CHECKED
 										mov		eax, MF_UNCHECKED
 										mov		ddFlagCheat, 0
+										push	eax
+										push	ebx
+										invoke	SetWindowText, hWinMain, offset szCaptionMain
+										pop		ebx
+										pop		eax
+								;开启无赖模式
 								.else
 										mov		eax, MF_CHECKED
 										mov		ddFlagCheat, 1
+										push	eax
+										push	ebx
+										invoke	SetWindowText, hWinMain, offset szCaptionMainCheating
+										pop		ebx
+										pop		eax
 								.endif
 								invoke	CheckMenuItem, hMenu, ebx, eax
 						.elseif	eax >= IDR_BEGINNER && eax <= IDR_CUSTOM
