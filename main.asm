@@ -204,7 +204,7 @@ dwColAdvanced			dw		30
 ddMinesAdvanced			dd		99
 dwRowMaster				dw		30
 dwColMaster				dw		30
-ddMinesMaster			dd		500
+ddMinesMaster			dd		300
 
 .code
 
@@ -869,12 +869,12 @@ _CreateGame		proc	uses eax ebx ecx edx esi edi, hWnd
 				local	@dwX:WORD, @dwY:WORD
 				mov		ddGameOver, 0
 				mov		byte ptr bStarted,0
+				invoke	GlobalFree,ddPointer
 				mov		ddPointer,0
 				mov		ddMineSweepedCount,0
 				mov		ddFlagCount,0
 				mov		ddTimer, 0
 				invoke	KillTimer, hWinMain ,ID_TIMER
-				invoke	GlobalFree,ddPointer
 				mov		eax, ddLevel
 				mov		ddLevel, eax
 				.if		ddLevel == IDR_BEGINNER
